@@ -1,1 +1,37 @@
+name: Build APK
 
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      # Les fichiers sont tous à la racine du dépôt.
+      # Cette étape les range dans la structure attendue par Android, uniquement pendant la compilation.
+      - name: Préparer la structure Android
+        run: |
+          mkdir -p src/main/java/com/wifimanager/app
+          cp ./*.java src/main/java/com/wifimanager/app/
+          cp AndroidManifest.xml src/main/AndroidManifest.xml
+
+      - name: Compiler l'APK
+        run: gradle assembleDebug --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AppConstant-apk
+          path: build/outputs/apk/debug/*.apk
